@@ -9,32 +9,32 @@ void OTAsetup(const char* hostname) {
   ArduinoOTA.onStart([]() {
     String type;
     if (ArduinoOTA.getCommand() == U_FLASH) {
-      type = "sketch";
+      type = F("sketch");
     } else { // U_FS
-      type = "filesystem";
+      type = F("filesystem");
     }
 
     // NOTE: if updating FS this would be the place to unmount FS using FS.end()
-    messageSerial.println("Start updating " + type);
+    messageSerial.println(String(F("Start updating ")) + type);
   });
   ArduinoOTA.onEnd([]() {
-    messageSerial.println("\nEnd");
+    messageSerial.println(F("\nEnd"));
   });
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    messageSerial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    messageSerial.printf_P(PSTR("Progress: %u%%\r"), (progress / (total / 100)));
   });
   ArduinoOTA.onError([](ota_error_t error) {
-    messageSerial.printf("Error[%u]: ", error);
+    messageSerial.printf_P(PSTR("Error[%u]: "), error);
     if (error == OTA_AUTH_ERROR) {
-      messageSerial.println("Auth Failed");
+      messageSerial.println(F("Auth Failed"));
     } else if (error == OTA_BEGIN_ERROR) {
-      messageSerial.println("Begin Failed");
+      messageSerial.println(F("Begin Failed"));
     } else if (error == OTA_CONNECT_ERROR) {
-      messageSerial.println("Connect Failed");
+      messageSerial.println(F("Connect Failed"));
     } else if (error == OTA_RECEIVE_ERROR) {
-      messageSerial.println("Receive Failed");
+      messageSerial.println(F("Receive Failed"));
     } else if (error == OTA_END_ERROR) {
-      messageSerial.println("End Failed");
+      messageSerial.println(F("End Failed"));
     }
   });
   ArduinoOTA.begin();

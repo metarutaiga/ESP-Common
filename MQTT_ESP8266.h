@@ -1,10 +1,36 @@
 #pragma once
 
 #include <ESP8266WiFi.h>
+#define private public
 #include <PubSubClient.h> // see https://github.com/knolleary/pubsubclient
+class PubSubClient_P : public PubSubClient {
+#undef private
+public:
+  PubSubClient_P(Client& client) : PubSubClient(client) {}
+  boolean publish(const char* topic, const char* payload, boolean retained = false) {
+    if (connected()) {
+      // Leave room in the buffer for header and variable length field
+      uint16_t length = MQTT_MAX_HEADER_SIZE;
+      length = writeString(topic,this->buffer,length);
+
+      // Add payload
+      uint16_t plength = strnlen_P(payload,this->bufferSize);
+      memcpy_P(this->buffer+length,payload,plength);
+      length += plength;
+
+      // Write the header
+      uint8_t header = MQTTPUBLISH;
+      if (retained) {
+        header |= 1;
+      }
+      return write(header,this->buffer,length-MQTT_MAX_HEADER_SIZE);
+    }
+    return false;
+  }
+};
 
 WiFiClient espClient;
-PubSubClient MQTTclient(espClient);
+PubSubClient_P MQTTclient(espClient);
 
 const char* MQTTprefix(const __FlashStringHelper* prefix, ...) {
   static char path[128];
@@ -50,8 +76,8 @@ void MQTTinformation() {
   MQTTclient.publish(MQTTprefix(F("ESP"), F("ResetReason"), 0), ESP.getResetReason().c_str());
   MQTTclient.publish(MQTTprefix(F("ESP"), F("ResetInfo"), 0), ESP.getResetInfo().c_str());
 
-  MQTTclient.publish(MQTTprefix(F("ESP"), F("Build"), 0), __DATE__ " " __TIME__, true);
-  MQTTclient.publish(MQTTprefix(F("ESP"), F("Version"), 0), VERSION, true);
+  MQTTclient.publish(MQTTprefix(F("ESP"), F("Build"), 0), PSTR(__DATE__ " " __TIME__), true);
+  MQTTclient.publish(MQTTprefix(F("ESP"), F("Version"), 0), PSTR(VERSION), true);
 }
 
 void MQTTupdate() {
@@ -59,6 +85,7 @@ void MQTTupdate() {
   if (loopHeapMillis < millis()) {
     loopHeapMillis = millis() + 1000 * 10;
 
+#ifdef NTP_PACKET_SIZE
     // Time
     static int now_Minutes = -1;
     int minutes = timeClient.getMinutes();
@@ -68,6 +95,7 @@ void MQTTupdate() {
       sprintf_P(number, PSTR("%02d:%02d"), hours, minutes);
       MQTTclient.publish(MQTTprefix(F("ESP"), F("Time"), 0), number);
     }
+#endif
 
     // Heap
     static int now_FreeHeap = -1;
@@ -112,7 +140,9 @@ void MQTTreconnect(const char* hostname, bool wait) {
       // Wait 5 seconds before retrying
       for (int i = 0; i < 5; ++i) {
         delay(1000);
+#ifdef __ARDUINO_OTA_H
         ArduinoOTA.handle();
+#endif
       }
     }
   }

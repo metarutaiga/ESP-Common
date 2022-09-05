@@ -88,10 +88,10 @@ void MQTTupdate() {
 #ifdef NTP_PACKET_SIZE
     // Time
     static int now_Minutes = -1;
-    int minutes = timeClient.getMinutes();
+    int minutes = ntpClient.getMinutes();
     if (now_Minutes != minutes) {
       now_Minutes = minutes;
-      int hours = timeClient.getHours();
+      int hours = ntpClient.getHours();
       sprintf_P(number, PSTR("%02d:%02d"), hours, minutes);
       MQTTclient.publish(MQTTprefix(F("ESP"), F("Time"), 0), number);
     }

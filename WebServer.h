@@ -10,7 +10,9 @@ void WEBroot() {
   // Head
   html += F("<html>");
   html += F("<head>");
-  html += F(  "<title>TaiSEIA</title>");
+  html += F(  "<title>");
+  html += hostname;
+  html += F(  "</title>");
   html += F("</head>");
   html += F("<body>");
 

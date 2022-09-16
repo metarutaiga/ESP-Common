@@ -3,8 +3,8 @@
 #include <ESP8266WiFi.h>
 #define private public
 #include <PubSubClient.h> // see https://github.com/knolleary/pubsubclient
-class PubSubClient_P : public PubSubClient {
 #undef private
+class PubSubClient_P : public PubSubClient {
 public:
   PubSubClient_P(Client& client) : PubSubClient(client) {}
   boolean publish(const char* topic, const char* payload, boolean retained = false) {
@@ -85,8 +85,8 @@ void MQTTupdate() {
   if (loopHeapMillis < millis()) {
     loopHeapMillis = millis() + 1000 * 10;
 
-#ifdef NTP_PACKET_SIZE
     // Time
+#ifdef NTP_PACKET_SIZE
     static int now_Minutes = -1;
     int minutes = ntpClient.getMinutes();
     if (now_Minutes != minutes) {

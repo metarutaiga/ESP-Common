@@ -2,7 +2,21 @@
 
 #include <ESP8266WebServer.h>
 
-ESP8266WebServer webServer(80);
+class ESP8266WebServer_R : public ESP8266WebServer {
+public:
+  void removeAllHandler() {
+    RequestHandlerType* handler = _firstHandler;
+    while (handler) {
+      RequestHandlerType* next = handler->next();
+      delete handler;
+      handler = next;
+    }
+    _currentHandler = nullptr;
+    _firstHandler = nullptr;
+    _lastHandler = nullptr;
+  }
+};
+ESP8266WebServer_R webServer;
 
 void WEBroot() {
   String html;
@@ -93,6 +107,7 @@ void WEBroot() {
 }
 
 void WEBsetup() {
+  webServer.removeAllHandler();
   webServer.onNotFound([]() {
     webServer.send(404, F("text/plain"), F("404"));
   });

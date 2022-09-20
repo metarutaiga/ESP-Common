@@ -86,16 +86,16 @@ void MQTTupdate() {
     loopHeapMillis = millis() + 1000 * 10;
 
     // Time
-#ifdef NTP_PACKET_SIZE
     static int now_Minutes = -1;
-    int minutes = ntpClient.getMinutes();
+    time_t t = time(nullptr);
+    struct tm* tm = localtime(&t);
+    int minutes = tm->tm_min;
     if (now_Minutes != minutes) {
       now_Minutes = minutes;
-      int hours = ntpClient.getHours();
+      int hours = tm->tm_hour;
       sprintf_P(number, PSTR("%02d:%02d"), hours, minutes);
       MQTTclient.publish(MQTTprefix(F("ESP"), F("Time"), 0), number);
     }
-#endif
 
     // Heap
     static int now_FreeHeap = -1;

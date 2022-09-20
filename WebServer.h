@@ -71,10 +71,10 @@ void WEBroot() {
 #endif
 
   // NTP
-#ifdef NTP_PACKET_SIZE
   {
     String ntp;
     String ntpZone;
+    time_t t = time(nullptr);
     File file = LittleFS.open("ntp", "r");
     if (file) {
       ntp = file.readStringUntil('\n'); ntp.trim();
@@ -89,9 +89,8 @@ void WEBroot() {
     html += F(  "<input name='zone' length=32 value='"); html += ntpZone + F("'>");
     html += F(  "<input type='submit'>");
     html += F("</form>");
-    html += ntpClient.getFormattedTime();
+    html += asctime(localtime(&t));
   }
-#endif
 
   // Reset
   {
@@ -144,7 +143,6 @@ void WEBsetup() {
 #endif
 
   // NTP
-#ifdef NTP_PACKET_SIZE
   webServer.on(F("/ntp"), []() {
     String name = webServer.arg(F("name"));
     String zone = webServer.arg(F("zone"));
@@ -153,14 +151,11 @@ void WEBsetup() {
       file.println(name);
       file.println(zone);
       file.close();
-      ntpClient.setPoolServerName(strdup(name.c_str()));
-      ntpClient.setTimeOffset(zone.toInt() * 3600);
-      ntpClient.forceUpdate();
+      configTime(zone.toInt() * 3600, 0, strdup(name.c_str()));
     }
     webServer.sendHeader(F("Location"), F("/"), true);
     webServer.send(302, F("text/plain"), F(""));
   });
-#endif
 
   // Reset
   webServer.on(F("/reset"), []() {

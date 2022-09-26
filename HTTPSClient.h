@@ -66,9 +66,24 @@ void HTTPSupdatefile(const char* name, const char* host, const char* path, int s
     delay(10);
   }
 
+  // Buffer
+  const int chunk = 1024;
+  byte* buffers[16] = {};
+  for (int i = 0; i < 16; ++i) {
+    if (space <= 0) {
+      break;
+    }
+    if (space >= chunk) {
+      buffers[i] = (byte*)malloc(chunk);
+    }
+    else {
+      buffers[i] = (byte*)malloc(space);
+    }
+    space -= chunk;
+  }
+
   // Data
   int count = 0;
-  byte* buffer = new byte[space];
   for (int i = 0; i < 2000; i += 10) {
     if (client.connected() == false)
       break;
@@ -77,18 +92,22 @@ void HTTPSupdatefile(const char* name, const char* host, const char* path, int s
       delay(10);
       continue;
     }
-    buffer[count++] = c;
+    buffers[count / chunk][count % chunk] = c;
+    count++;
     i = 0;
   }
   messageSerial.printf_P(PSTR("%d\n"), count);
 
+  // Directory
+  LittleFS.mkdir(String(FPSTR("files")).c_str());
+
   // Update
   bool update = (count != 0);
-  File file = LittleFS.open(String(FPSTR(name)).c_str(), "r");
+  File file = LittleFS.open((String(F("files")) + F("/") + name).c_str(), "r");
   if (file) {
     update = false;
     for (int i = 0; i < count; ++i) {
-      if (buffer[i] != file.read()) {
+      if (buffers[i / chunk][i % chunk] != file.read()) {
         update = true;
         break;
       }
@@ -96,19 +115,32 @@ void HTTPSupdatefile(const char* name, const char* host, const char* path, int s
     file.close();
   }
   if (update) {
-    file = LittleFS.open(String(FPSTR(name)).c_str(), "w");
+    file = LittleFS.open((String(F("files")) + F("/") + name).c_str(), "w");
     if (file) {
-      file.write(buffer, count);
+      for (int i = 0; i < 16; ++i) {
+        if (count <= 0) {
+          break;
+        }
+        messageSerial.printf_P(PSTR("%d/%d\n"), i * chunk, i * chunk + count);
+        if (count >= chunk) {
+          file.write(buffers[i], chunk);
+        }
+        else {
+          file.write(buffers[i], count);
+        }
+        count -= chunk;
+      }      
       file.close();
-      messageSerial.printf_P(PSTR("%s\n"), PSTR("updated"));
     }
   }
-  delete[] buffer;
+  for (int i = 0; i < 16; ++i) {
+    free(buffers[i]);
+  }
 }
 
 void HTTPSupdatelist(const char* name, const char* host, const char* path, int space = 4096) {
   HTTPSupdatefile(name, host, path, space);
-  File file = LittleFS.open(String(FPSTR(name)).c_str(), "r");
+  File file = LittleFS.open((String(F("files")) + F("/") + name).c_str(), "r");
   if (file) {
     for (;;) {
       String name = file.readStringUntil('\n');

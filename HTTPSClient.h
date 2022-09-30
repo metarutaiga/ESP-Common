@@ -1,6 +1,7 @@
 #pragma once
 
 #include <WiFiClientSecure.h>
+#include <ESP8266httpUpdate.h>
 
 // DigiCert High Assurance EV Root CA
 const char trustRoot[] PROGMEM = R"EOF(
@@ -27,6 +28,31 @@ YSEY1QSteDwsOoBrp+uvFRTp2InBuThs4pFsiv9kuXclVzDAGySj4dzp30d8tbQk
 CAUw7C29C79Fv1C5qfPrmAESrciIxpg0X40KPMbp1ZWVbd4=
 -----END CERTIFICATE-----
 )EOF";
+
+void HTTPSupdatefirmware(const char* name, const char* host, const char* path) {
+
+  // Connect
+  X509List cert(trustRoot);
+  WiFiClientSecure client;
+  client.setTrustAnchors(&cert);
+
+  messageSerial.println(F("Starting OTA : "));
+  ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
+  t_httpUpdate_return ret = ESPhttpUpdate.update(client, (String(F("https://")) + host + path + name).c_str());
+  switch (ret) {
+  case HTTP_UPDATE_FAILED:
+    messageSerial.printf_P(PSTR("HTTP_UPDATE_FAILD Error (%d): %s\n"), ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+    break;
+
+  case HTTP_UPDATE_NO_UPDATES:
+    messageSerial.println(F("HTTP_UPDATE_NO_UPDATES"));
+    break;
+
+  case HTTP_UPDATE_OK:
+    messageSerial.println(F("HTTP_UPDATE_OK"));
+    break;
+  } 
+}
 
 void HTTPSupdatefile(const char* name, const char* host, const char* path, int space = 4096) {
 
@@ -142,10 +168,16 @@ void HTTPSupdatelist(const char* name, const char* host, const char* path, int s
   HTTPSupdatefile(name, host, path, space);
   File file = LittleFS.open((String(F("files")) + F("/") + name).c_str(), "r");
   if (file) {
-    for (;;) {
+    for (int i = 0; i < 1024; ++i) {
       String name = file.readStringUntil('\n');
       if (name.isEmpty())
         break;
+      if (i == 0) {
+        if (name != F(VERSION)) {
+          HTTPSupdatefirmware(String(F("firmware.bin")).c_str(), host, path);
+        }
+        continue;
+      }
       HTTPSupdatefile(name.c_str(), host, path, space);
     }
     file.close();

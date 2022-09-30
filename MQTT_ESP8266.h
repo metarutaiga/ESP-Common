@@ -116,7 +116,7 @@ void MQTTupdate() {
 }
 
 // https://github.com/knolleary/pubsubclient/blob/master/examples/mqtt_esp8266/mqtt_esp8266.ino
-void MQTTreconnect(const char* hostname, bool wait) {
+bool MQTTreconnect(const char* hostname, bool wait) {
   // Loop until we're reconnected
   while (!MQTTclient.connected()) {
     messageSerial.print(F("Attempting MQTT connection..."));
@@ -128,6 +128,7 @@ void MQTTreconnect(const char* hostname, bool wait) {
       MQTTclient.subscribe(MQTTprefix(F("set"), F("#"), 0));
       MQTTclient.setBufferSize(512);
       MQTTinformation();
+      return true;
     }
     else {
       messageSerial.print(F("failed, rc="));
@@ -146,4 +147,5 @@ void MQTTreconnect(const char* hostname, bool wait) {
       }
     }
   }
+  return false;
 }

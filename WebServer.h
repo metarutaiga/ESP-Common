@@ -163,6 +163,13 @@ void WEBsetup() {
     webServer.sendHeader(F("Location"), F("/"), true);
     webServer.send(302, F("text/plain"), F(""));
   });
+
+  // Format
+  webServer.on(F("/format_fs"), []() {
+    LittleFS.format();
+    webServer.sendHeader(F("Location"), F("/"), true);
+    webServer.send(302, F("text/plain"), F(""));
+  });
 }
 
 void WEBloop() {

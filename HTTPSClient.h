@@ -54,20 +54,10 @@ void HTTPSupdatefirmware(const char* name, const char* host, const char* path) {
   } 
 }
 
-void HTTPSupdatefile(const char* name, const char* host, const char* path, int space = 4096) {
-
-  // Connect
-  X509List cert(trustRoot);
-  WiFiClientSecure client;
-  client.setTrustAnchors(&cert);
-  messageSerial.printf_P(PSTR("%s\n"), name);
-  if (client.connect(String(FPSTR(host)), 443) == false) {
-    messageSerial.printf_P(PSTR("%s\n"), PSTR("failed"));
-    return;
-  }
-  messageSerial.printf_P(PSTR("%s\n"), PSTR("connected"));
+void HTTPSupdatefile(const char* name, const char* host, const char* path, WiFiClientSecure& client) {
 
   // Header
+  int length = 0;
   {
     String get;
     get += F("GET ");
@@ -78,35 +68,30 @@ void HTTPSupdatefile(const char* name, const char* host, const char* path, int s
     get += F("Host: ");
     get += FPSTR(host);
     get += F("\r\n");
-    get += F("Connection: close");
+    get += F("Connection: keep-alive");
     get += F("\r\n");
     get += F("\r\n");
     client.print(get);
+    messageSerial.printf_P(PSTR("%s\n"), name);
   }
   for (int i = 0; i < 2000; i += 10) {
     String line = client.readStringUntil('\n');
     if (line == "\r") {
-      messageSerial.printf_P(PSTR("%s\n"), PSTR("header"));
       break;
+    }
+    if (line.indexOf(F("Content-Length")) != -1) {
+      length = strtol(line.c_str() + sizeof("Content-Length:"), nullptr, 10);
     }
     delay(10);
   }
+  messageSerial.printf_P(PSTR("%d\n"), length);
+  if (length == 0) {
+    return;
+  }
 
   // Buffer
-  const int chunk = 1024;
-  byte* buffers[16] = {};
-  for (int i = 0; i < 16; ++i) {
-    if (space <= 0) {
-      break;
-    }
-    if (space >= chunk) {
-      buffers[i] = (byte*)malloc(chunk);
-    }
-    else {
-      buffers[i] = (byte*)malloc(space);
-    }
-    space -= chunk;
-  }
+  const int chunk = 256;
+  byte* buffers[64] = {};
 
   // Data
   int count = 0;
@@ -118,11 +103,17 @@ void HTTPSupdatefile(const char* name, const char* host, const char* path, int s
       delay(10);
       continue;
     }
+    if (buffers[count / chunk] == nullptr) {
+      buffers[count / chunk] = (byte*)malloc(chunk);
+      messageSerial.printf_P(PSTR("%d/%d\n"), count, length);
+    }
     buffers[count / chunk][count % chunk] = c;
     count++;
+    if (count == length) {
+      break;
+    }
     i = 0;
   }
-  messageSerial.printf_P(PSTR("%d\n"), count);
 
   // Directory
   LittleFS.mkdir(String(FPSTR("files")).c_str());
@@ -143,7 +134,7 @@ void HTTPSupdatefile(const char* name, const char* host, const char* path, int s
   if (update) {
     file = LittleFS.open((String(F("files")) + F("/") + name).c_str(), "w");
     if (file) {
-      for (int i = 0; i < 16; ++i) {
+      for (int i = 0; i < 64; ++i) {
         if (count <= 0) {
           break;
         }
@@ -159,27 +150,43 @@ void HTTPSupdatefile(const char* name, const char* host, const char* path, int s
       file.close();
     }
   }
-  for (int i = 0; i < 16; ++i) {
+  for (int i = 0; i < 64; ++i) {
     free(buffers[i]);
   }
 }
 
-void HTTPSupdatelist(const char* name, const char* host, const char* path, int space = 4096) {
-  HTTPSupdatefile(name, host, path, space);
+void HTTPSupdatelist(const char* name, const char* host, const char* path) {
+
+  // Connect
+  X509List cert(trustRoot);
+  WiFiClientSecure client;
+  client.setTrustAnchors(&cert);
+  if (client.connect(String(FPSTR(host)), 443) == false) {
+    messageSerial.printf_P(PSTR("%s\n"), PSTR("failed"));
+    return;
+  }
+  messageSerial.printf_P(PSTR("%s\n"), PSTR("connected"));
+  
+  // Get List
+  HTTPSupdatefile(name, host, path, client);
   File file = LittleFS.open((String(F("files")) + F("/") + name).c_str(), "r");
   if (file) {
+    bool updateFirmware = false;
     for (int i = 0; i < 1024; ++i) {
       String name = file.readStringUntil('\n');
       if (name.isEmpty())
         break;
       if (i == 0) {
         if (name != F(VERSION)) {
-          HTTPSupdatefirmware(String(F("firmware.bin")).c_str(), host, path);
+          updateFirmware = true;
         }
         continue;
       }
-      HTTPSupdatefile(name.c_str(), host, path, space);
+      HTTPSupdatefile(name.c_str(), host, path, client);
     }
     file.close();
+    if (updateFirmware) {
+      HTTPSupdatefirmware(String(F("firmware.bin")).c_str(), host, path);
+    }
   }
 }

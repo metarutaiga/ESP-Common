@@ -29,13 +29,7 @@ CAUw7C29C79Fv1C5qfPrmAESrciIxpg0X40KPMbp1ZWVbd4=
 -----END CERTIFICATE-----
 )EOF";
 
-void HTTPSupdatefirmware(const char* name, const char* host, const char* path) {
-
-  // Connect
-  X509List cert(trustRoot);
-  WiFiClientSecure client;
-  client.setTrustAnchors(&cert);
-
+void HTTPSupdatefirmware(const char* name, const char* host, const char* path, WiFiClientSecure& client) {
   messageSerial.println(F("Starting OTA : "));
   ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
   t_httpUpdate_return ret = ESPhttpUpdate.update(client, (String(F("https://")) + host + path + name).c_str());
@@ -186,7 +180,7 @@ void HTTPSupdatelist(const char* name, const char* host, const char* path) {
     }
     file.close();
     if (updateFirmware) {
-      HTTPSupdatefirmware(String(F("firmware.bin")).c_str(), host, path);
+      HTTPSupdatefirmware(String(F("firmware.bin")).c_str(), host, path, client);
     }
   }
 }

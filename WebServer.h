@@ -48,6 +48,21 @@ void WEBroot() {
     html += F("</form>");
   }
 
+  // OTA
+  {
+    String ota;
+    File file = LittleFS.open("ota", "r");
+    if (file) {
+      ota = file.readStringUntil('\n'); ota.trim();
+      file.close();
+    }
+    html += F("<form method='get' action='ota'>");
+    html += F(  "<label>OTA</label>");
+    html += F(  "<input name='ota' length=32 value='"); html += ota + F("'>");
+    html += F(  "<input type='submit'>");
+    html += F("</form>");
+  }
+
   // MQTT
 #ifdef PubSubClient_h
   {
@@ -119,6 +134,18 @@ void WEBsetup() {
     if (file) {
       file.println(ssid);
       file.println(pass);
+      file.close();
+    }
+    webServer.sendHeader(F("Location"), F("/"), true);
+    webServer.send(302, F("text/plain"), F(""));
+  });
+
+  // OTA
+  webServer.on(F("/ota"), []() {
+    String ota = webServer.arg(F("ota"));
+    File file = LittleFS.open("ota", "w");
+    if (file) {
+      file.println(ota);
       file.close();
     }
     webServer.sendHeader(F("Location"), F("/"), true);

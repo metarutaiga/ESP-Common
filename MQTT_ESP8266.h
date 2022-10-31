@@ -23,7 +23,10 @@ public:
       if (retained) {
         header |= 1;
       }
-      return write(header,this->buffer,length-MQTT_MAX_HEADER_SIZE);
+      if (write(header,this->buffer,length-MQTT_MAX_HEADER_SIZE)) {
+        ((WiFiClient*)_client)->flush(5000);
+        return true;
+      }
     }
     return false;
   }

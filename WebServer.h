@@ -15,6 +15,10 @@ public:
     _firstHandler = nullptr;
     _lastHandler = nullptr;
   }
+  void sendContent(const String& content) {
+    ESP8266WebServer::sendContent(content);
+    ESP8266WebServer::client().flush(5000);
+  }
 };
 ESP8266WebServer_R webServer;
 

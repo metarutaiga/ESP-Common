@@ -34,94 +34,85 @@ void WEBroot() {
   html += F("</head>");
   html += F("<body>");
 
+  // Chunked
+  webServer.chunkedResponseModeStart(200, F("text/html"));
+  webServer.sendContent(html); html.clear();
+
   // SSID
-  {
-    String ssid;
-    File file = LittleFS.open("ssid", "r");
-    if (file) {
-      ssid = file.readStringUntil('\n'); ssid.trim();
-      file.close();
-    }
-    html += F("<form method='get' action='ssid'>");
-    html += F(  "<label>SSID</label>");
-    html += F(  "<input name='ssid' length=32 value='"); html += ssid + F("'>");
-    html += F(  "<br>");
-    html += F(  "<label>PASS</label>");
-    html += F(  "<input type='password' name='pass' length=32>");
-    html += F(  "<input type='submit'>");
-    html += F("</form>");
+  String ssid;
+  if (File file = LittleFS.open("ssid", "r")) {
+    ssid = file.readStringUntil('\n'); ssid.trim();
   }
+  html += F("<form method='get' action='ssid'>");
+  html += F(  "<label>SSID</label>");
+  html += F(  "<input name='ssid' length=32 value='"); html += ssid + F("'>");
+  html += F(  "<br>");
+  html += F(  "<label>PASS</label>");
+  html += F(  "<input type='password' name='pass' length=32>");
+  html += F(  "<input type='submit'>");
+  html += F("</form>");
+  webServer.sendContent(html); html.clear();
 
   // OTA
-  {
-    String ota;
-    File file = LittleFS.open("ota", "r");
-    if (file) {
-      ota = file.readStringUntil('\n'); ota.trim();
-      file.close();
-    }
-    html += F("<form method='get' action='ota'>");
-    html += F(  "<label>OTA</label>");
-    html += F(  "<input name='ota' length=32 value='"); html += ota + F("'>");
-    html += F(  "<input type='submit'>");
-    html += F("</form>");
+  String ota;
+  if (File file = LittleFS.open("ota", "r")) {
+    ota = file.readStringUntil('\n'); ota.trim();
   }
+  html += F("<form method='get' action='ota'>");
+  html += F(  "<label>OTA</label>");
+  html += F(  "<input name='ota' length=32 value='"); html += ota + F("'>");
+  html += F(  "<input type='submit'>");
+  html += F("</form>");
+  webServer.sendContent(html); html.clear();
 
   // MQTT
 #ifdef PubSubClient_h
-  {
-    String mqtt;
-    String mqttPort;
-    File file = LittleFS.open("mqtt", "r");
-    if (file) {
-      mqtt = file.readStringUntil('\n'); mqtt.trim();
-      mqttPort = file.readStringUntil('\n'); mqttPort.trim();
-      file.close();
-    }
-    html += F("<form method='get' action='mqtt'>");
-    html += F(  "<label>MQTT</label>");
-    html += F(  "<input name='mqtt' length=32 value='"); html += mqtt + F("'>");
-    html += F(  "<br>");
-    html += F(  "<label>PORT</label>");
-    html += F(  "<input name='port' length=32 value='"); html += mqttPort + F("'>");
-    html += F(  "<input type='submit'>");
-    html += F("</form>");
+  String mqtt;
+  String mqttPort;
+  if (File file = LittleFS.open("mqtt", "r")) {
+    mqtt = file.readStringUntil('\n'); mqtt.trim();
+    mqttPort = file.readStringUntil('\n'); mqttPort.trim();
   }
+  html += F("<form method='get' action='mqtt'>");
+  html += F(  "<label>MQTT</label>");
+  html += F(  "<input name='mqtt' length=32 value='"); html += mqtt + F("'>");
+  html += F(  "<br>");
+  html += F(  "<label>PORT</label>");
+  html += F(  "<input name='port' length=32 value='"); html += mqttPort + F("'>");
+  html += F(  "<input type='submit'>");
+  html += F("</form>");
+  webServer.sendContent(html); html.clear();
 #endif
 
   // NTP
-  {
-    String ntp;
-    String ntpZone;
-    time_t t = time(nullptr);
-    File file = LittleFS.open("ntp", "r");
-    if (file) {
-      ntp = file.readStringUntil('\n'); ntp.trim();
-      ntpZone = file.readStringUntil('\n'); ntpZone.trim();
-      file.close();
-    }
-    html += F("<form method='get' action='ntp'>");
-    html += F(  "<label>NTP</label>");
-    html += F(  "<input name='name' length=32 value='"); html += ntp + F("'>");
-    html += F(  "<br>");
-    html += F(  "<label>ZONE</label>");
-    html += F(  "<input name='zone' length=32 value='"); html += ntpZone + F("'>");
-    html += F(  "<input type='submit'>");
-    html += F("</form>");
-    html += asctime(localtime(&t));
+  String ntp;
+  String ntpZone;
+  time_t t = time(nullptr);
+  if (File file = LittleFS.open("ntp", "r")) {
+    ntp = file.readStringUntil('\n'); ntp.trim();
+    ntpZone = file.readStringUntil('\n'); ntpZone.trim();
   }
+  html += F("<form method='get' action='ntp'>");
+  html += F(  "<label>NTP</label>");
+  html += F(  "<input name='name' length=32 value='"); html += ntp + F("'>");
+  html += F(  "<br>");
+  html += F(  "<label>ZONE</label>");
+  html += F(  "<input name='zone' length=32 value='"); html += ntpZone + F("'>");
+  html += F(  "<input type='submit'>");
+  html += F("</form>");
+  html += asctime(localtime(&t));
+  webServer.sendContent(html); html.clear();
 
   // Reset
-  {
-    html += F("<form method='get' action='reset'>");
-    html += F(  "<button type='submit'>Reset</button>");
-    html += F("</form>");
-  }
+  html += F("<form method='get' action='reset'>");
+  html += F(  "<button type='submit'>Reset</button>");
+  html += F("</form>");
 
   // Tail
   html += F("</body>");
   html += F("</html>");
-  webServer.send(200, F("text/html"), html);
+  webServer.sendContent(html); html.clear();
+  webServer.chunkedResponseFinalize();
 }
 
 void WEBsetup() {
@@ -134,11 +125,9 @@ void WEBsetup() {
   webServer.on(F("/ssid"), []() {
     String ssid = webServer.arg(F("ssid"));
     String pass = webServer.arg(F("pass"));
-    File file = LittleFS.open("ssid", "w");
-    if (file) {
+    if (File file = LittleFS.open("ssid", "w")) {
       file.println(ssid);
       file.println(pass);
-      file.close();
     }
     webServer.sendHeader(F("Location"), F("/"), true);
     webServer.send(302, F("text/plain"), F(""));
@@ -147,10 +136,8 @@ void WEBsetup() {
   // OTA
   webServer.on(F("/ota"), []() {
     String ota = webServer.arg(F("ota"));
-    File file = LittleFS.open("ota", "w");
-    if (file) {
+    if (File file = LittleFS.open("ota", "w")) {
       file.println(ota);
-      file.close();
     }
     webServer.sendHeader(F("Location"), F("/"), true);
     webServer.send(302, F("text/plain"), F(""));
@@ -161,11 +148,9 @@ void WEBsetup() {
   webServer.on(F("/mqtt"), []() {
     String mqtt = webServer.arg(F("mqtt"));
     String port = webServer.arg(F("port"));
-    File file = LittleFS.open("mqtt", "w");
-    if (file) {
+    if (File file = LittleFS.open("mqtt", "w")) {
       file.println(mqtt);
       file.println(port);
-      file.close();
       MQTTclient.setServer(strdup(mqtt.c_str()), port.toInt());
     }
     webServer.sendHeader(F("Location"), F("/"), true);
@@ -177,11 +162,9 @@ void WEBsetup() {
   webServer.on(F("/ntp"), []() {
     String name = webServer.arg(F("name"));
     String zone = webServer.arg(F("zone"));
-    File file = LittleFS.open("ntp", "w");
-    if (file) {
+    if (File file = LittleFS.open("ntp", "w")) {
       file.println(name);
       file.println(zone);
-      file.close();
       configTime(zone.toInt() * 3600, 0, strdup(name.c_str()));
     }
     webServer.sendHeader(F("Location"), F("/"), true);

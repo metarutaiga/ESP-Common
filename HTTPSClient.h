@@ -114,8 +114,7 @@ void HTTPSupdatefile(const char* name, const char* host, const char* path, WiFiC
 
   // Update
   bool update = (count != 0);
-  File file = LittleFS.open((String(F("files")) + F("/") + name).c_str(), "r");
-  if (file) {
+  if (File file = LittleFS.open((String(F("files")) + F("/") + name).c_str(), "r")) {
     update = false;
     for (int i = 0; i < count; ++i) {
       if (buffers[i / chunk][i % chunk] != file.read()) {
@@ -123,11 +122,9 @@ void HTTPSupdatefile(const char* name, const char* host, const char* path, WiFiC
         break;
       }
     }
-    file.close();
   }
   if (update) {
-    file = LittleFS.open((String(F("files")) + F("/") + name).c_str(), "w");
-    if (file) {
+    if (File file = LittleFS.open((String(F("files")) + F("/") + name).c_str(), "w")) {
       for (int i = 0; i < 64; ++i) {
         if (count <= 0) {
           break;
@@ -141,7 +138,6 @@ void HTTPSupdatefile(const char* name, const char* host, const char* path, WiFiC
         }
         count -= chunk;
       }      
-      file.close();
     }
   }
   for (int i = 0; i < 64; ++i) {
@@ -163,8 +159,7 @@ void HTTPSupdatelist(const char* name, const char* host, const char* path) {
   
   // Get List
   HTTPSupdatefile(name, host, path, client);
-  File file = LittleFS.open((String(F("files")) + F("/") + name).c_str(), "r");
-  if (file) {
+  if (File file = LittleFS.open((String(F("files")) + F("/") + name).c_str(), "r")) {
     bool updateFirmware = false;
     for (int i = 0; i < 1024; ++i) {
       String name = file.readStringUntil('\n');
@@ -178,7 +173,6 @@ void HTTPSupdatelist(const char* name, const char* host, const char* path) {
       }
       HTTPSupdatefile(name.c_str(), host, path, client);
     }
-    file.close();
     if (updateFirmware) {
       HTTPSupdatefirmware(String(F("firmware.bin")).c_str(), host, path, client);
     }

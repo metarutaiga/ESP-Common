@@ -40,7 +40,7 @@ void WEBroot() {
 
   // SSID
   String ssid;
-  if (File file = LittleFS.open("ssid", "r")) {
+  if (File file = LittleFS.open(String(F("ssid")).c_str(), String(F("r")).c_str())) {
     ssid = file.readStringUntil('\n'); ssid.trim();
   }
   html += F("<form method='get' action='ssid'>");
@@ -55,7 +55,7 @@ void WEBroot() {
 
   // OTA
   String ota;
-  if (File file = LittleFS.open("ota", "r")) {
+  if (File file = LittleFS.open(String(F("ota")).c_str(), String(F("r")).c_str())) {
     ota = file.readStringUntil('\n'); ota.trim();
   }
   html += F("<form method='get' action='ota'>");
@@ -69,7 +69,7 @@ void WEBroot() {
 #ifdef PubSubClient_h
   String mqtt;
   String mqttPort;
-  if (File file = LittleFS.open("mqtt", "r")) {
+  if (File file = LittleFS.open(String(F("mqtt")).c_str(), String(F("r")).c_str())) {
     mqtt = file.readStringUntil('\n'); mqtt.trim();
     mqttPort = file.readStringUntil('\n'); mqttPort.trim();
   }
@@ -88,7 +88,7 @@ void WEBroot() {
   String ntp;
   String ntpZone;
   time_t t = time(nullptr);
-  if (File file = LittleFS.open("ntp", "r")) {
+  if (File file = LittleFS.open(String(F("ntp")).c_str(), String(F("r")).c_str())) {
     ntp = file.readStringUntil('\n'); ntp.trim();
     ntpZone = file.readStringUntil('\n'); ntpZone.trim();
   }
@@ -125,7 +125,7 @@ void WEBsetup() {
   webServer.on(F("/ssid"), []() {
     String ssid = webServer.arg(F("ssid"));
     String pass = webServer.arg(F("pass"));
-    if (File file = LittleFS.open("ssid", "w")) {
+    if (File file = LittleFS.open(String(F("ssid")).c_str(), String(F("w")).c_str())) {
       file.println(ssid);
       file.println(pass);
     }
@@ -136,7 +136,7 @@ void WEBsetup() {
   // OTA
   webServer.on(F("/ota"), []() {
     String ota = webServer.arg(F("ota"));
-    if (File file = LittleFS.open("ota", "w")) {
+    if (File file = LittleFS.open(String(F("ota")).c_str(), String(F("w")).c_str())) {
       file.println(ota);
     }
     webServer.sendHeader(F("Location"), F("/"), true);
@@ -148,7 +148,7 @@ void WEBsetup() {
   webServer.on(F("/mqtt"), []() {
     String mqtt = webServer.arg(F("mqtt"));
     String port = webServer.arg(F("port"));
-    if (File file = LittleFS.open("mqtt", "w")) {
+    if (File file = LittleFS.open(String(F("mqtt")).c_str(), String(F("w")).c_str())) {
       file.println(mqtt);
       file.println(port);
       MQTTclient.setServer(strdup(mqtt.c_str()), port.toInt());
@@ -162,7 +162,7 @@ void WEBsetup() {
   webServer.on(F("/ntp"), []() {
     String name = webServer.arg(F("name"));
     String zone = webServer.arg(F("zone"));
-    if (File file = LittleFS.open("ntp", "w")) {
+    if (File file = LittleFS.open(String(F("ntp")).c_str(), String(F("w")).c_str())) {
       file.println(name);
       file.println(zone);
       configTime(zone.toInt() * 3600, 0, strdup(name.c_str()));

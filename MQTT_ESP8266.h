@@ -124,9 +124,9 @@ bool MQTTreconnect(const char* hostname, bool wait) {
   while (!MQTTclient.connected()) {
     messageSerial.print(F("Attempting MQTT connection..."));
     // Attempt to connect
-    if (MQTTclient.connect(hostname, MQTTprefix(F("connected"), 0), 0, true, "false")) {
+    if (MQTTclient.connect(hostname, MQTTprefix(F("connected"), 0), 0, true, String(F("false")).c_str())) {
       messageSerial.println(F("connected"));
-      MQTTclient.publish(MQTTprefix(F("connected"), 0), "true", true);
+      MQTTclient.publish(MQTTprefix(F("connected"), 0), String(F("true")).c_str(), true);
       MQTTclient.publish(MQTTprefix(F("ESP"), F("IP"), 0), WiFi.localIP().toString().c_str(), true);
       MQTTclient.subscribe(MQTTprefix(F("set"), F("#"), 0));
       MQTTclient.setBufferSize(512);

@@ -110,7 +110,7 @@ void HTTPSupdatefile(const char* name, const char* host, const char* path, WiFiC
   }
 
   // Directory
-  LittleFS.mkdir(String(FPSTR("files")).c_str());
+  LittleFS.mkdir(String(F("files")).c_str());
 
   // Update
   bool update = (count != 0);

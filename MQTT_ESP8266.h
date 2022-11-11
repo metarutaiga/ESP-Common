@@ -24,7 +24,11 @@ public:
         header |= 1;
       }
       if (write(header,this->buffer,length-MQTT_MAX_HEADER_SIZE)) {
-        ((WiFiClient*)_client)->flush(5000);
+        for (int i = 0; i < 5000; i += WIFICLIENT_MAX_FLUSH_WAIT_MS) {
+          if (((WiFiClient*)_client)->flush(WIFICLIENT_MAX_FLUSH_WAIT_MS))
+            break;
+          loop();
+        }
         return true;
       }
     }

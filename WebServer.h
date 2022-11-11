@@ -17,7 +17,13 @@ public:
   }
   void sendContent(const String& content) {
     ESP8266WebServer::sendContent(content);
-    ESP8266WebServer::client().flush(5000);
+    for (int i = 0; i < 5000; i += WIFICLIENT_MAX_FLUSH_WAIT_MS) {
+      if (ESP8266WebServer::client().flush(WIFICLIENT_MAX_FLUSH_WAIT_MS))
+        break;
+#ifdef PubSubClient_h
+      MQTTclient.loop();
+#endif
+    }
   }
 };
 ESP8266WebServer_R webServer;

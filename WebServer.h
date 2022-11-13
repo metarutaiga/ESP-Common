@@ -59,6 +59,35 @@ void WEBroot() {
   html += F("</form>");
   webServer.sendContent(html); html.clear();
 
+  // IP
+  String ip = WiFi.localIP().toString();
+  String gateway = WiFi.gatewayIP().toString();
+  String subnet = WiFi.subnetMask().toString();
+  String dns = WiFi.dnsIP().toString();
+#if 0
+  if (File file = LittleFS.open(String(F("ip")).c_str(), String(F("r")).c_str())) {
+    ip = file.readStringUntil('\n'); ssid.trim();
+    gateway = file.readStringUntil('\n'); ssid.trim();
+    subnet = file.readStringUntil('\n'); ssid.trim();
+    dns = file.readStringUntil('\n'); ssid.trim();
+  }
+#endif
+  html += F("<form method='get' action='ip'>");
+  html += F(  "<label>IP</label>");
+  html += F(  "<input name='ip' length=32 value='"); html += ip + F("'>");
+  html += F(  "<br>");
+  html += F(  "<label>Gateway</label>");
+  html += F(  "<input name='gateway' length=32 value='"); html += gateway + F("'>");
+  html += F(  "<br>");
+  html += F(  "<label>Subnet</label>");
+  html += F(  "<input name='subnet' length=32 value='"); html += subnet + F("'>");
+  html += F(  "<br>");
+  html += F(  "<label>DNS</label>");
+  html += F(  "<input name='dns' length=32 value='"); html += dns + F("'>");
+  html += F(  "<input type='submit'>");
+  html += F("</form>");
+  webServer.sendContent(html); html.clear();
+
   // OTA
   String ota;
   if (File file = LittleFS.open(String(F("ota")).c_str(), String(F("r")).c_str())) {
@@ -134,6 +163,22 @@ void WEBsetup() {
     if (File file = LittleFS.open(String(F("ssid")).c_str(), String(F("w")).c_str())) {
       file.println(ssid);
       file.println(pass);
+    }
+    webServer.sendHeader(F("Location"), F("/"), true);
+    webServer.send(302, F("text/plain"), F(""));
+  });
+
+  // IP
+  webServer.on(F("/ip"), []() {
+    String ip = webServer.arg(F("ip"));
+    String gateway = webServer.arg(F("gateway"));
+    String subnet = webServer.arg(F("subnet"));
+    String dns = webServer.arg(F("dns"));
+    if (File file = LittleFS.open(String(F("ip")).c_str(), String(F("w")).c_str())) {
+      file.println(IPAddress::isValid(ip) ? ip : String());
+      file.println(IPAddress::isValid(gateway) ? gateway : String());
+      file.println(IPAddress::isValid(subnet) ? subnet : String());
+      file.println(IPAddress::isValid(dns) ? dns : String());
     }
     webServer.sendHeader(F("Location"), F("/"), true);
     webServer.send(302, F("text/plain"), F(""));

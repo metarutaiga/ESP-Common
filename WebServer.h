@@ -35,7 +35,7 @@ void WEBroot() {
   html += F("<html>");
   html += F("<head>");
   html += F(  "<title>");
-  html += hostname;
+  html += WiFi.hostname();
   html += F(  "</title>");
   html += F("</head>");
   html += F("<body>");
@@ -103,7 +103,7 @@ void WEBroot() {
   // MQTT
 #ifdef PubSubClient_h
   String mqtt;
-  String mqttPort;
+  String mqttPort = F("1883");
   if (File file = LittleFS.open(String(F("mqtt")).c_str(), String(F("r")).c_str())) {
     mqtt = file.readStringUntil('\n'); mqtt.trim();
     mqttPort = file.readStringUntil('\n'); mqttPort.trim();
@@ -120,8 +120,8 @@ void WEBroot() {
 #endif
 
   // NTP
-  String ntp;
-  String ntpZone;
+  String ntp = F("pool.ntp.org");
+  String ntpZone = F("9");
   time_t t = time(nullptr);
   if (File file = LittleFS.open(String(F("ntp")).c_str(), String(F("r")).c_str())) {
     ntp = file.readStringUntil('\n'); ntp.trim();

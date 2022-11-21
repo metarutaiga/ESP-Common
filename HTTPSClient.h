@@ -166,7 +166,7 @@ void HTTPSupdatelist(const char* name, const char* host, const char* path) {
       if (name.isEmpty())
         break;
       if (i == 0) {
-        if (name != String(FPSTR(version))) {
+        if (strcmp_P(name.c_str(), version) != 0) {
           updateFirmware = true;
         }
         continue;

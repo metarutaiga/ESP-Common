@@ -84,7 +84,7 @@ void MQTTinformation() {
   MQTTclient.publish(MQTTprefix(F("ESP"), F("ResetInfo"), 0), ESP.getResetInfo().c_str());
 
   MQTTclient.publish(MQTTprefix(F("ESP"), F("Build"), 0), PSTR(__DATE__ " " __TIME__), true);
-  MQTTclient.publish(MQTTprefix(F("ESP"), F("Version"), 0), PSTR(VERSION), true);
+  MQTTclient.publish(MQTTprefix(F("ESP"), F("Version"), 0), version, true);
 }
 
 void MQTTupdate() {

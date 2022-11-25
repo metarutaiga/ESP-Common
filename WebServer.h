@@ -135,7 +135,18 @@ void WEBroot() {
   html += F(  "<input name='zone' length=32 value='"); html += ntpZone + F("'>");
   html += F(  "<input type='submit'>");
   html += F("</form>");
-  html += asctime(localtime(&t));
+  struct tm* tm = localtime(&t);
+  html += String(tm->tm_year);
+  html += '.';
+  html += String(tm->tm_mon + 1);
+  html += '.';
+  html += String(tm->tm_mday);
+  html += ' ';
+  html += String(tm->tm_hour);
+  html += ':';
+  html += String(tm->tm_min);
+  html += ':';
+  html += String(tm->tm_sec);
   webServer.sendContent(html); html.clear();
 
   // Reset

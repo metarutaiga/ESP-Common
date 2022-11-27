@@ -70,7 +70,7 @@ void HTTPSupdatefile(const char* name, const char* host, const char* path, WiFiC
   }
   for (int i = 0; i < 2000; i += 10) {
     String line = client.readStringUntil('\n');
-    if (line == "\r") {
+    if (line == F("\r")) {
       break;
     }
     if (line.indexOf(F("Content-Length")) != -1) {

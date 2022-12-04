@@ -64,6 +64,10 @@ void WEBroot() {
   String gateway = WiFi.gatewayIP().toString();
   String subnet = WiFi.subnetMask().toString();
   String dns = WiFi.dnsIP().toString();
+  ip = IPAddress::isValid(ip) ? ip : String();
+  gateway = IPAddress::isValid(gateway) ? gateway : String();
+  subnet = IPAddress::isValid(subnet) ? subnet : String();
+  dns = IPAddress::isValid(dns) ? dns : String();
 #if 0
   if (File file = LittleFS.open(String(F("ip")).c_str(), String(F("r")).c_str())) {
     ip = file.readStringUntil('\n'); ssid.trim();
